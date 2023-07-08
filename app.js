@@ -1,3 +1,4 @@
+w.disableCursor();
        // Get the canvas element
        const canvas = owot;
        const context = canvas.getContext("2d");
