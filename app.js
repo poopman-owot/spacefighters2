@@ -8,9 +8,10 @@ var app = {
   cmd: "cmd",
   id: w.clientId,
   title: "spacefighters",
-  b:[]
+  b: []
 };
-var started = false;;
+
+var started = false;
 var localDraw = [];
 var historyDraw = [];
 var isCtrlPressed = false;
@@ -110,17 +111,44 @@ run(app.cmd, function(e) {
 // Setup main appliction functions
 function onMessageReceived(e) {
   if (e.namespace == app.title) {
-playerShips.push([e.id,e.location,e.health,e.angle,e.color])
-if(e.bullets){
-  for (let i = 0; i < e.bullets.length; i++) {
-    const bullet = e.bullets[i];
-playerBullets.push([bullet]);
+    // Dumb update of bullets
+    if (e.bullets) {
+      for (let i = 0; i < e.bullets.length; i++) {
+        const bullet = e.bullets[i];
+        playerBullets.push([bullet]);
+      }
+    }
 
+    if (playerShips.hasOwnProperty(e.id)) {
+        // Clear the existing timeout for playerShips[e.id] if it exists
+        clearTimeout(playerShips[e.id].timeout);
+      const ship = playerShips[e.id];
+      if (
+        ship.location === e.location &&
+        ship.health === e.health &&
+        ship.angle === e.angle &&
+        ship.color === e.color
+      ) {
+        // All values are the same, no need to update
+        return;
+      }
+    }
+
+    // Set new values for the player ship
+    playerShips[e.id] = {
+      location: e.location,
+      health: e.health,
+      angle: e.angle,
+      color: e.color,
+    };
+
+    // Set a timer to remove the player ship after 1 second
+    playerShips[e.id].timeout = setTimeout(() => {
+      delete playerShips[e.id];
+    }, 1000);
   }
 }
 
-  }
-}
 
 
 send(app.t)
@@ -132,7 +160,9 @@ run(app.c, function(e) {
     elm.page_chatfield.lastChild.remove();
     app.id = getBestID(e);
     player.name = app.id;
-    if(!started){gameLoop();}
+    if (!started) {
+      gameLoop();
+    }
   }
 })
 // Setup Application UI
@@ -175,7 +205,7 @@ const player = {
 // Bullets array
 const bullets = [];
 const playerBullets = [];
-const playerShips = [];
+const playerShips = {};
 // Keyboard state
 const keys = {};
 
@@ -189,8 +219,8 @@ function keyDownHandler(event) {
   if (event.keyCode === 32) {
     // Spacebar to shoot
     bullets.push({
-      x: player.x + Math.cos(player.angle) * (player.radius+cellW*5),
-      y: player.y + Math.sin(player.angle) * (player.radius+cellH*2),
+      x: player.x + Math.cos(player.angle) * (player.radius + cellW * 5),
+      y: player.y + Math.sin(player.angle) * (player.radius + cellH * 2),
       velocity: {
         x: Math.cos(player.angle) * 5,
         y: Math.sin(player.angle) * 5
@@ -263,7 +293,7 @@ function updatePlayer() {
 }
 
 // Function to draw the health bar
-function drawHealthBar(x,y,id,h) {
+function drawHealthBar(x, y, id, h) {
   const barWidth = 50;
   const barHeight = 5;
   const xPos = x - barWidth / 2;
@@ -290,7 +320,7 @@ function checkBulletCollision() {
 
     const bullet = playerBullets[i];
 
-    const [x, y] =  CellToPixelCoords(bullet[0]);
+    const [x, y] = CellToPixelCoords(bullet[0]);
 
     const dx = x - player.x;
     const dy = y - player.y;
@@ -304,18 +334,18 @@ function checkBulletCollision() {
       player.health -= 10;
       if (player.health < 0) {
         player.health = 0;
-document.location.reload()
+        document.location.reload()
       }
     }
     context.fillStyle = "red";
     context.fillRect(x, y, 5, 5);
-}
-playerBullets.length = 0;
+  }
+  playerBullets.length = 0;
 }
 
 // Game loop
 function gameLoop() {
-	started = true;
+  started = true;
   // Clear the canvas
   context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -339,56 +369,59 @@ function gameLoop() {
       i--;
     }
   }
-   for (let i = 0; i < playerShips.length; i++) {
-   const ship = playerShips[i];
-   const [id,loc,h,a,c] = ship;
-   const [x,y] = CellToPixelCoords(loc);
-// Draw the player ship
-  context.strokeStyle = "#303030";
-  context.lineWidth = 2;
-  context.beginPath();
-  context.moveTo(
-    x + Math.cos(a + (3 / 4) * Math.PI) * player.radius,
-    y + Math.sin(a + (3 / 4) * Math.PI) * player.radius
-  );
-  context.lineTo(
-    x + Math.cos(a + Math.PI) * player.radius / player.radius,
-    y + Math.sin(a + Math.PI) * player.radius / player.radius
-  );
-  context.lineTo(
-    x + Math.cos(a + (5 / 4) * Math.PI) * player.radius,
-    y + Math.sin(a + (5 / 4) * Math.PI) * player.radius
-  );
+  for (const id in playerShips) {
+    const {
+      location,
+      health,
+      angle,
+      color
+    } = playerShips[id];
+    const [x, y] = CellToPixelCoords(location);
+    // Draw the player ship
+    context.strokeStyle = "#303030";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(
+      x + Math.cos(angle + (3 / 4) * Math.PI) * player.radius,
+      y + Math.sin(angle + (3 / 4) * Math.PI) * player.radius
+    );
+    context.lineTo(
+      x + Math.cos(angle + Math.PI) * player.radius / player.radius,
+      y + Math.sin(angle + Math.PI) * player.radius / player.radius
+    );
+    context.lineTo(
+      x + Math.cos(angle + (5 / 4) * Math.PI) * player.radius,
+      y + Math.sin(angle + (5 / 4) * Math.PI) * player.radius
+    );
 
-  context.closePath();
-  context.fillStyle = c;
-  context.fill();
-  context.stroke();
-  drawHealthBar(x,y,id,h);
-  // Request the next frame	
-}
-  
+    context.closePath();
+    context.fillStyle = color;
+    context.fill();
+    context.stroke();
+    drawHealthBar(x, y, id, health);
+    // Request the next frame	
+  }
+
   // Check bullet-player collision	
   checkBulletCollision();
   // Draw the health bar	
 
-app.b = [];
-playerShips.length = 0;
+  app.b = [];
   for (let i = 0; i < bullets.length; i++) {
     const bullet = bullets[i];
-app.b.push(getTileCoordsFromMouseCoords(bullet.x,bullet.y))
-}
+    app.b.push(getTileCoordsFromMouseCoords(bullet.x, bullet.y))
+  }
 
 
-  const d= {
+  const d = {
 
-id: app.id,
-location: getTileCoordsFromMouseCoords(player.x, player.y),
-angle: player.angle,
-health: player.health,
-bullets: app.b,
-color: int_to_hexcode(YourWorld.Color)
-}
+    id: app.id,
+    location: getTileCoordsFromMouseCoords(player.x, player.y),
+    angle: player.angle,
+    health: player.health,
+    bullets: app.b,
+    color: int_to_hexcode(YourWorld.Color)
+  }
 
   sendmessage(app.title, d);
   requestAnimationFrame(gameLoop);
@@ -521,5 +554,3 @@ function getBestID(e) {
   }
   return a;
 }
-
-
