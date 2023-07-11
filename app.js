@@ -120,8 +120,8 @@ function onMessageReceived(e) {
     }
 
     if (playerShips.hasOwnProperty(e.id)) {
-        // Clear the existing timeout for playerShips[e.id] if it exists
-        clearTimeout(playerShips[e.id].timeout);
+      // Clear the existing timeout for playerShips[e.id] if it exists
+      clearTimeout(playerShips[e.id].timeout);
       const ship = playerShips[e.id];
       if (
         ship.location === e.location &&
@@ -378,27 +378,47 @@ function gameLoop() {
     } = playerShips[id];
     const [x, y] = CellToPixelCoords(location);
     // Draw the player ship
-    context.strokeStyle = "#303030";
-    context.lineWidth = 2;
-    context.beginPath();
-    context.moveTo(
-      x + Math.cos(angle + (3 / 4) * Math.PI) * player.radius,
-      y + Math.sin(angle + (3 / 4) * Math.PI) * player.radius
-    );
-    context.lineTo(
-      x + Math.cos(angle + Math.PI) * player.radius / player.radius,
-      y + Math.sin(angle + Math.PI) * player.radius / player.radius
-    );
-    context.lineTo(
-      x + Math.cos(angle + (5 / 4) * Math.PI) * player.radius,
-      y + Math.sin(angle + (5 / 4) * Math.PI) * player.radius
-    );
+    if (x < 0 ||
+      x > canvas.width ||
+      y < 0 ||
+      y > canvas.height) {
+    const dx = x - player.x;
+    const dy = y - player.y;
 
-    context.closePath();
-    context.fillStyle = color;
-    context.fill();
-    context.stroke();
-    drawHealthBar(x, y, id, health);
+const distance = Math.sqrt(dx * dx + dy * dy)*0.001;
+const indicatorR = 11 - (Math.max(Math.min(distance, 10), 1));
+const indicatorX = Math.max(Math.min(x, canvas.width-indicatorR), indicatorR);
+const indicatorY = Math.max(Math.min(y, canvas.height-indicatorR), indicatorR);
+context.fillStyle = color;
+context.beginPath();
+context.arc(indicatorX, indicatorY, indicatorR, 0, 2 * Math.PI);
+context.stroke();
+context.fill();
+
+} else {
+
+      context.strokeStyle = "#303030";
+      context.lineWidth = 2;
+      context.beginPath();
+      context.moveTo(
+        x + Math.cos(angle + (3 / 4) * Math.PI) * player.radius,
+        y + Math.sin(angle + (3 / 4) * Math.PI) * player.radius
+      );
+      context.lineTo(
+        x + Math.cos(angle + Math.PI) * player.radius / player.radius,
+        y + Math.sin(angle + Math.PI) * player.radius / player.radius
+      );
+      context.lineTo(
+        x + Math.cos(angle + (5 / 4) * Math.PI) * player.radius,
+        y + Math.sin(angle + (5 / 4) * Math.PI) * player.radius
+      );
+
+      context.closePath();
+      context.fillStyle = color;
+      context.fill();
+      context.stroke();
+      drawHealthBar(x, y, id, health);
+    }
     // Request the next frame	
   }
 
@@ -554,3 +574,11 @@ function getBestID(e) {
   }
   return a;
 }
+state.background = {
+  path: "https://ik.imagekit.io/poopman/Spacefighters2/city_1__HNFrIZH2S.png?updatedAt=1689084313790"
+};
+loadBackgroundData(() => {
+  w.redraw();
+}, () => {
+  w.redraw();
+});
