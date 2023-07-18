@@ -10,7 +10,7 @@ var app = {
   title: "spacefighters",
   b: []
 };
-
+var canFire = true;
 var started = false;
 var localDraw = [];
 var historyDraw = [];
@@ -215,8 +215,12 @@ document.addEventListener("keyup", keyUpHandler);
 
 // Keydown event handler
 function keyDownHandler(event) {
+
   keys[event.keyCode] = true;
-  if (event.keyCode === 32) {
+
+
+  if (event.keyCode === 32 && canFire === true) {
+canFire = false;
     // Spacebar to shoot
     bullets.push({
       x: player.x + Math.cos(player.angle) * (player.radius + cellW * 5),
@@ -343,10 +347,11 @@ const locY = y + (positionY - oy);
   }
   playerBullets.length = 0;
 }
-
+setInterval(function(){  canFire = true;},500)
 // Game loop
 function gameLoop() {
   started = true;
+
   // Clear the canvas
   context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -447,7 +452,7 @@ const locY = y + (positionY - oy);
   }
 
   sendmessage(app.title, d);
-  requestAnimationFrame(gameLoop);
+setTimeout(function(){gameLoop();},15)
 }
 
 
