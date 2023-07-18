@@ -320,10 +320,11 @@ function checkBulletCollision() {
 
     const bullet = playerBullets[i];
 
-    const [x, y] = CellToPixelCoords(bullet[0]);
-
-    const dx = x - player.x;
-    const dy = y - player.y;
+    const [x, y,ox,oy] = bullet[0];
+const locX = x + (positionX - ox);
+const locY = y + (positionY - oy);
+    const dx = locX - player.x;
+    const dy = locY - player.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     if (distance < 10) {
       // Bullet hit player
@@ -338,7 +339,7 @@ function checkBulletCollision() {
       }
     }
     context.fillStyle = "red";
-    context.fillRect(x, y, 5, 5);
+    context.fillRect(locX, locY, 5, 5);
   }
   playerBullets.length = 0;
 }
@@ -376,48 +377,50 @@ function gameLoop() {
       angle,
       color
     } = playerShips[id];
-    const [x, y] = CellToPixelCoords(location);
-    // Draw the player ship
-    if (x < 0 ||
-      x > canvas.width ||
-      y < 0 ||
-      y > canvas.height) {
-    const dx = x - player.x;
-    const dy = y - player.y;
+    const [x, y,ox,oy] = location;
+const locX = x + (positionX - ox);
+const locY = y + (positionY - oy);
+    // Draw indicator
+    if (locX < 0 ||
+      locX > canvas.width ||
+      locY < 0 ||
+      locY > canvas.height) {
+      const dx = locX - player.x;
+      const dy = locY - player.y;
 
-const distance = Math.sqrt(dx * dx + dy * dy)*0.001;
-const indicatorR = 11 - (Math.max(Math.min(distance, 10), 1));
-const indicatorX = Math.max(Math.min(x, canvas.width-indicatorR), indicatorR);
-const indicatorY = Math.max(Math.min(y, canvas.height-indicatorR), indicatorR);
-context.fillStyle = color;
-context.beginPath();
-context.arc(indicatorX, indicatorY, indicatorR, 0, 2 * Math.PI);
-context.stroke();
-context.fill();
+      const distance = Math.sqrt(dx * dx + dy * dy) * 0.001;
+      const indicatorR = 11 - (Math.max(Math.min(distance, 10), 1));
+      const indicatorX = Math.max(Math.min(locX, canvas.width - indicatorR), indicatorR);
+      const indicatorY = Math.max(Math.min(locY, canvas.height - indicatorR), indicatorR);
+      context.fillStyle = color;
+      context.beginPath();
+      context.arc(indicatorX, indicatorY, indicatorR, 0, 2 * Math.PI);
+      context.stroke();
+      context.fill();
 
-} else {
-
+    } else {
+//draw ship
       context.strokeStyle = "#303030";
       context.lineWidth = 2;
       context.beginPath();
       context.moveTo(
-        x + Math.cos(angle + (3 / 4) * Math.PI) * player.radius,
-        y + Math.sin(angle + (3 / 4) * Math.PI) * player.radius
+        locX + Math.cos(angle + (3 / 4) * Math.PI) * player.radius,
+        locY + Math.sin(angle + (3 / 4) * Math.PI) * player.radius
       );
       context.lineTo(
-        x + Math.cos(angle + Math.PI) * player.radius / player.radius,
-        y + Math.sin(angle + Math.PI) * player.radius / player.radius
+        locX + Math.cos(angle + Math.PI) * player.radius / player.radius,
+        locY + Math.sin(angle + Math.PI) * player.radius / player.radius
       );
       context.lineTo(
-        x + Math.cos(angle + (5 / 4) * Math.PI) * player.radius,
-        y + Math.sin(angle + (5 / 4) * Math.PI) * player.radius
+        locX + Math.cos(angle + (5 / 4) * Math.PI) * player.radius,
+        locY + Math.sin(angle + (5 / 4) * Math.PI) * player.radius
       );
 
       context.closePath();
       context.fillStyle = color;
       context.fill();
       context.stroke();
-      drawHealthBar(x, y, id, health);
+      drawHealthBar(locX, locY, id, health);
     }
     // Request the next frame	
   }
@@ -429,14 +432,14 @@ context.fill();
   app.b = [];
   for (let i = 0; i < bullets.length; i++) {
     const bullet = bullets[i];
-    app.b.push(getTileCoordsFromMouseCoords(bullet.x, bullet.y))
+    app.b.push([bullet.x, bullet.y,positionX,positionY])
   }
 
 
   const d = {
 
     id: app.id,
-    location: getTileCoordsFromMouseCoords(player.x, player.y),
+    location: [player.x, player.y,positionX,positionY],
     angle: player.angle,
     health: player.health,
     bullets: app.b,
